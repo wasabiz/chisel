@@ -120,6 +120,11 @@ class WhenSuite extends TestSuite {
       } 
     }
 
+    // Generate a dot file for this case.
+    chiselMain(Array[String]("--backend", "dot",
+      "--targetDir", dir.getPath.toString()),
+      () => Module(new ElsewhenModule()))
+
     launchCppTester((m: ElsewhenModule) => new ElsewhenModuleTests(m))
   }
 
@@ -211,4 +216,104 @@ class WhenSuite extends TestSuite {
 
     launchCppTester((m: SwitchModule) => new SwitchModuleTests(m))
   }
+
+  // Bad code generated for nested when. Issue #265
+  @Test def testNestedWhen265() {
+    class testNestedWhen265_1 extends Module {
+      val io = new Bundle {
+        val cond1 = Bool(INPUT)
+        val cond2 = Bool(INPUT)
+        val in = Bool(INPUT)
+        val out = Bool(OUTPUT)
+      }
+    
+      val register = Reg(Bool())
+    
+      when(io.cond1){
+        when(io.cond2){
+          register := io.in
+        } otherwise {
+          register := Bool(false)
+        }
+      }
+    
+      io.out := register
+    }
+
+    class NestedWhenTests_1(m: testNestedWhen265_1) extends Tester(m) {
+      case class TruthTable(cond1: Int, cond2: Int, in: Int, out:Int)
+      val truthTable = Array[TruthTable](
+          TruthTable(0, 0, 1, 0),
+          TruthTable(0, 1, 1, 0),
+          TruthTable(1, 0, 1, 0),
+          TruthTable(1, 1, 0, 0),
+          TruthTable(1, 1, 1, 1),
+          TruthTable(0, 0, 1, 1), // Register should retain its previous value
+          TruthTable(0, 1, 0, 1), // Register should retain its previous value
+          TruthTable(0, 0, 0, 1)  // Register should retain its previous value
+          )
+      for (tv <- truthTable) {
+        poke(m.io.in, tv.in)
+        poke(m.io.cond1, tv.cond1)
+        poke(m.io.cond2, tv.cond2)
+        step(1)
+        expect(m.io.out, tv.out)
+      }
+    }
+
+    class testNestedWhen265_2 extends Module {
+      val io = new Bundle {
+        val cond1 = Bool(INPUT)
+        val cond2 = Bool(INPUT)
+        val in = Bool(INPUT)
+        val out = Bool(OUTPUT)
+      }
+    
+      val register = Reg(Bool())
+    
+      when(io.cond1){
+        when(io.cond2){
+          register := io.in
+        }
+      } otherwise {
+        register := Bool(false)
+      }
+    
+      io.out := register
+    }
+
+    class NestedWhenTests_2(m: testNestedWhen265_2) extends Tester(m) {
+      case class TruthTable(cond1: Int, cond2: Int, in: Int, out:Int)
+      val truthTable = Array[TruthTable](
+          TruthTable(0, 0, 1, 0),
+          TruthTable(0, 1, 1, 0),
+          TruthTable(1, 0, 1, 0),
+          TruthTable(1, 1, 1, 1),
+          TruthTable(1, 0, 1, 1), // Register should retain its previous value
+          TruthTable(1, 0, 0, 1)  // Register should retain its previous value
+          )
+      for (tv <- truthTable) {
+        poke(m.io.in, tv.in)
+        poke(m.io.cond1, tv.cond1)
+        poke(m.io.cond2, tv.cond2)
+        step(1)
+        expect(m.io.out, tv.out)
+      }
+    }
+
+    // Generate a dot file for these cases.
+    chiselMain(Array[String]("--backend", "dot",
+      "--targetDir", dir.getPath.toString()),
+      () => Module(new testNestedWhen265_1()))
+
+    launchCppTester((m: testNestedWhen265_1) => new NestedWhenTests_1(m))
+
+    // Generate a dot file for these cases.
+    chiselMain(Array[String]("--backend", "dot",
+      "--targetDir", dir.getPath.toString()),
+      () => Module(new testNestedWhen265_2()))
+
+    launchCppTester((m: testNestedWhen265_2) => new NestedWhenTests_2(m))
+  }
+
 }

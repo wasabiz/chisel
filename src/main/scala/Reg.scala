@@ -169,6 +169,13 @@ class Reg extends Delay with proc {
 
   override def usesInClockHi(n: Node) = n eq next
 
+  // See issue 265.
+  // For nested whens involving registers, we were short-circuiting
+  // the top most mux when a register participated in lower mux.
+  // If this register is already involved in a condition,
+  // we need a new Mux.
+  override def defaultMissing: Boolean = !procAssigned
+
   // these are used to infer read enables on Mems
   protected[Chisel] def isEnable: Boolean = next.isInstanceOf[Mux] && (next.inputs(2) eq this)
   protected[Chisel] def enableSignal: Node = if (isEnable) next.inputs(0) else Bool(true)
