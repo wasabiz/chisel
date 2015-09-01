@@ -362,6 +362,11 @@ abstract class StableLockingArbiterLike[T <: Data](gen: T, n: Int, count: Int, n
   }
 }
 
+/** @param gen The type of producers
+  * @param n The number of producers
+  * @param count The size of burst
+  * @param needsLock The lock condition for burst (default is always lock)
+  */
 class LockingRRArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: Option[T => Bool] = None) extends LockingArbiterLike[T](gen, n, count, needsLock) {
   lazy val last_grant = Reg(init=UInt(0, log2Up(n)))
   override def grant: Seq[Bool] = {
@@ -379,6 +384,11 @@ class LockingRRArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: Option[
   when (io.out.fire()) { last_grant := chosen }
 }
 
+/** @param gen The type of producers
+  * @param n The number of producers
+  * @param count The size of burst
+  * @param needsLock The lock condition for burst (default is always lock)
+  */
 class StableLockingRRArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: Option[T => Bool] = None)
     extends StableLockingArbiterLike[T](gen, n, count, needsLock) {
   lazy val last_grant = Reg(init=UInt(0, log2Up(n)))
@@ -397,6 +407,11 @@ class StableLockingRRArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: O
   chosen := Mux(locked, lockIdx, choose)
 }
 
+/** @param gen The type of producers
+  * @param n The number of producers
+  * @param count The size of burst
+  * @param needsLock The lock condition for burst (default is always lock)
+  */
 class LockingArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: Option[T => Bool] = None) extends LockingArbiterLike[T](gen, n, count, needsLock) {
   def grant: Seq[Bool] = ArbiterCtrl(io.in.map(_.valid))
 
@@ -407,6 +422,11 @@ class LockingArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: Option[T 
   chosen := Mux(locked, lockIdx, choose)
 }
 
+/** @param gen The type of producers
+  * @param n The number of producers
+  * @param count The size of burst
+  * @param needsLock The lock condition for burst (default is always lock)
+  */
 class StableLockingArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: Option[T => Bool] = None)
     extends StableLockingArbiterLike[T](gen, n, count, needsLock) {
   def grant: Seq[Bool] = ArbiterCtrl(io.in.map(_.valid))
@@ -422,12 +442,27 @@ class StableLockingArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: Opt
   Producers are chosen in round robin order.
 
   Example usage:
-    {{{ val arb = new RRArbiter(2, UInt())
+    {{{ val arb = new Module(RRArbiter(2, UInt())
     arb.io.in(0) <> producer0.io.out
     arb.io.in(1) <> producer1.io.out
     consumer.io.in <> arb.io.out }}}
+  * @param gen The type of producers
+  * @param n The number of producers
   */
 class RRArbiter[T <: Data](gen:T, n: Int) extends LockingRRArbiter[T](gen, n, 1)
+
+/** Hardware module that is used to sequence n producers into 1 consumer.
+  Producers are served in a first-come, first-served manner.
+  When multiple producers come simultaneously, they are chosen in round robin order.
+
+  Example usage:
+    {{{ val arb = new Module(StableRRArbiter(2, UInt())
+    arb.io.in(0) <> producer0.io.out
+    arb.io.in(1) <> producer1.io.out
+    consumer.io.in <> arb.io.out }}}
+  * @param gen The type of producers
+  * @param n The number of producers
+  */
 class StableRRArbiter[T <: Data](gen:T, n: Int) extends StableLockingRRArbiter[T](gen, n, 1)
 
 /** Hardware module that is used to sequence n producers into 1 consumer.
@@ -438,8 +473,23 @@ class StableRRArbiter[T <: Data](gen:T, n: Int) extends StableLockingRRArbiter[T
    arb.io.in(0) <> producer0.io.out
    arb.io.in(1) <> producer1.io.out
    consumer.io.in <> arb.io.out }}}
+  * @param gen The type of producers
+  * @param n The number of producers
  */
 class Arbiter[T <: Data](gen: T, n: Int) extends LockingArbiter[T](gen, n, 1)
+
+/** Hardware module that is used to sequence n producers into 1 consumer.
+  Producers are served in a first-come, first-served manner.
+  When multiple producers come simultaneously, priority is given to lower producer.
+
+ Example usage:
+   {{{ val arb = Module(new StableArbiter(2, UInt()))
+   arb.io.in(0) <> producer0.io.out
+   arb.io.in(1) <> producer1.io.out
+   consumer.io.in <> arb.io.out }}}
+  * @param gen The type of producers
+  * @param n The number of producers
+ */
 class StableArbiter[T <: Data](gen: T, n: Int) extends StableLockingArbiter[T](gen, n, 1)
 
 
