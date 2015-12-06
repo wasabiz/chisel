@@ -147,7 +147,7 @@ class Mem[T <: Data](gen: () => T, val n: Int, val seqRead: Boolean, val ordered
 
   def apply(addr: UInt): T = {
     val rdata = read(addr)
-    rdata.comp = Some(new PutativeMemWrite(this, addr))
+    rdata.procOpt = Some(new PutativeMemWrite(this, addr))
     rdata
   }
 

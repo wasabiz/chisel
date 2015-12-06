@@ -324,7 +324,7 @@ abstract class Bits extends Data with proc {
   /** Assignment operator */
   override protected def colonEquals(that: Bits) {
     checkCompatibility(that)
-    (comp match { case None => this case Some(p) => p}) procAssign that
+    (procOpt match { case None => this case Some(p) => p}) procAssign that
   }
 
   // bitwise operators
@@ -336,7 +336,7 @@ abstract class Bits extends Data with proc {
   /** Extract a single bit at position 'bit' as a Bool */
   final def apply(bit: UInt): Bool = {
     val res = Extract(this, bit){Bool()}
-    res.comp = Some(new Insert(this, bit, 1))
+    res.procOpt = Some(new Insert(this, bit, 1))
     res
   }
 
@@ -344,7 +344,7 @@ abstract class Bits extends Data with proc {
     * {{{ myBits = 0x5, myBits(1,0) => 0x3 }}} */
   final def apply(hi: Int, lo: Int): UInt = {
     val res = Extract(this, hi, lo){UInt()}
-    res.comp = Some(new Insert(this, UInt(lo), hi - lo + 1))
+    res.procOpt = Some(new Insert(this, UInt(lo), hi - lo + 1))
     res
   }
   /** Extract a range of bits, inclusive from hi to lo */

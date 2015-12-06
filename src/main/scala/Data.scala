@@ -63,7 +63,7 @@ object Data {
   generates target code.
   */
 abstract class Data extends Node {
-  var comp: Option[proc] = None // TODO: better name?
+  var procOpt: Option[proc] = None
 
   // Interface required by Vec:
   def ===[T <: Data](right: T): Bool = {
@@ -215,7 +215,7 @@ abstract class Data extends Node {
   /** name this node
     * @note use [[Chisel.Node.setName setName]] in [[Chisel.Node Node]] rather than this directly */
   override def nameIt(path: String, isNamingIo: Boolean) {
-    comp match {
+    procOpt match {
       case Some(p) if isTypeNode => p nameIt (path, isNamingIo)
       case _ => super.nameIt(path, isNamingIo)
     }
@@ -230,7 +230,7 @@ abstract class Data extends Node {
 
   // Chisel3 - type-only nodes (no data - initialization or assignment) - used for verifying Wire() wrapping
   override def isTypeOnly = {
-    comp match {
+    procOpt match {
       case Some(p) if isTypeNode => p.isTypeOnly
       case _ => super.isTypeOnly
     }

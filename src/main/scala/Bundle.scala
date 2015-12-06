@@ -174,7 +174,7 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
     * mySubModule.io <> io }}}
     */
   override def <>(src: Node): Unit = {
-    (comp, src) match {
+    (procOpt, src) match {
       case (None, other: Bundle) => for ((n, i) <- elements) {
         if (other contains n) i <> other(n)
         else ChiselError.warning("UNABLE TO FIND " + n + " IN " + other.component)
@@ -186,7 +186,7 @@ class Bundle(val view: Seq[String] = Seq()) extends Aggregate {
   }
 
   override protected def colonEquals(src: Bundle): Unit = {
-    comp match {
+    procOpt match {
       case Some(p) if isTypeNode => p procAssign src.toNode
       case _ => for ((n, i) <- elements if src contains n) i := src(n)
     }

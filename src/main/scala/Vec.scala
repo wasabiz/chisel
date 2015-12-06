@@ -88,7 +88,7 @@ object Vec {
 class VecProc(enables: Iterable[Bool], elms: Iterable[Data]) extends proc {
   override def procAssign(src: Node): Unit = {
     for ((en, elm) <- enables zip elms) when (en) {
-      elm.comp match {
+      elm.procOpt match {
         case None => elm.asInstanceOf[Bits] procAssign src
         case Some(p) => p procAssign src
       }
@@ -131,8 +131,8 @@ class Vec[T <: Data](val gen: (Int) => T, elts: Iterable[T]) extends Aggregate w
       val res = this(0).cloneType
       for(((n, io), sortedElm) <- res.flatten zip sortedElements) {
         io assign VecMux(iaddr, sortedElm)
-        // setup the comp for writes
-        io.comp = Some(new VecProc(enables, sortedElm))
+        // setup the procOpt for writes
+        io.procOpt = Some(new VecProc(enables, sortedElm))
       }
       readPorts(addr) = res
       res.setIsTypeNode
@@ -161,7 +161,7 @@ class Vec[T <: Data](val gen: (Int) => T, elts: Iterable[T]) extends Aggregate w
   def <>(src: Vec[T]) { (self zip src) foreach {case (s, o) => s <> o} }
   def <>(src: Iterable[T]) { (self zip src) foreach {case (s, o) => s <> o} }
 
-  override protected def colonEquals[T <: Data](that: Iterable[T]): Unit = comp match {
+  override protected def colonEquals[T <: Data](that: Iterable[T]): Unit = procOpt match {
     case Some(p) => p procAssign Vec(that)
     case None => { 
       def unidirectional[U <: Data](who: Iterable[(String, Bits)]) =

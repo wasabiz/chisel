@@ -97,20 +97,20 @@ object Reg {
         val w = r.getWidthW()
         p.init("", regWidth(w), p)
         r.inputs += p
-        r.comp = Some(p)
+        r.procOpt = Some(p)
       }
       case Some(p) => for ((r, i) <- res.flatten.unzip._2 zip p.flatten.unzip._2) {
         if (i.getWidth < 0) ChiselError.error("Negative width to wire " + res)
         val p = new RegReset
         p.init("", regWidth(i), p, i)
         r.inputs += p
-        r.comp = Some(p)
+        r.procOpt = Some(p)
       }
     }
     next match {
       case None =>
       case Some(p) => for ((r, n) <- res.flatten.unzip._2 zip p.flatten.unzip._2) {
-        r.comp match {
+        r.procOpt match {
           case None => // Todo: Error!
           case Some(p) => p doProcAssign (n, Bool(true))
         }
@@ -118,7 +118,7 @@ object Reg {
     }
     res.setIsTypeNode
     // set clock
-    res.flatten.unzip._2 foreach (sig => sig.comp match {
+    res.flatten.unzip._2 foreach (sig => sig.procOpt match {
       case None => sig.clock = clock
       case Some(p) => p.clock = clock
     })

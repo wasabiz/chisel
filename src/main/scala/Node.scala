@@ -353,15 +353,15 @@ abstract class Node extends Nameable {
     if (depth < 1) return
     writer.println(indent + getClass + " width=" + getWidth + " #inputs=" + inputs.length)
     this match {
-      case fix: SInt => fix.comp match {
+      case fix: SInt => fix.procOpt match {
         case None =>
         case Some(p) =>
-          writer.println(indent + "  (has comp " + p + " of type " + p.getClass + ")")
+          writer.println(indent + "  (has procOpt " + p + " of type " + p.getClass + ")")
       }
-      case bits: UInt => bits.comp match {
+      case bits: UInt => bits.procOpt match {
         case None =>
         case Some(p) =>
-          writer.println(indent + "(has comp " + p + ")")
+          writer.println(indent + "(has procOpt " + p + ")")
       }
       case any => writer.println(indent + this)
     }
